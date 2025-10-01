@@ -17,7 +17,7 @@ impl Line {
 
 #[derive(Debug)]
 pub struct SourceCodeContainer {
-    pub source_code: Vec<Line>,
+    source_code: Vec<Line>,
     pub total_lines: usize,
     pub total_chars: usize
 }
@@ -101,7 +101,7 @@ impl SourceCodeContainer {
             panic!("Expected a valid start or end pos");
         }
 
-        let mut lines: String = String::new();
+        let mut line: String = String::new();
         let mut rel_start_index = -1;
         for l in self.source_code.iter() {
             if start_pos > l.end_pos {
@@ -112,25 +112,76 @@ impl SourceCodeContainer {
                 if rel_start_index == -1 {
                     rel_start_index = l.get_relative_pos(start_pos) as i32;
                 }
-                lines.extend(l.line.iter());
+                line.extend(l.line.iter());
             }
-
-
         }
 
         let rel_start_pos = rel_start_index as usize;
         let rel_end_pos = rel_start_pos + (end_pos - start_pos);
 
-        return ErrorSource {
-            lines: lines,
+        let mut error_src = ErrorSource {
+            line: line,
             mark_start: rel_start_pos,
             mark_stop: rel_end_pos
         };
+        error_src.trim_line();
+        return error_src;
+    }
+
+    pub fn get_line_and_column(&self, pos: usize) -> (usize, usize) {
+        let mut lineno: usize = 0;
+        let mut columnno: usize = 0;
+        for l in self.source_code.iter() {
+            lineno += 1;
+            if pos > l.end_pos { continue }
+
+            columnno = l.get_relative_pos(pos) + 1;
+            break;
+        }
+
+        return (lineno, columnno);
     }
 }
 
+#[derive(Debug)]
 pub struct ErrorSource {
-    pub lines: String,
+    pub line: String,
     pub mark_start: usize,
     pub mark_stop: usize
+}
+
+impl ErrorSource {
+    pub fn trim_line(&mut self) {
+        let original = self.line.as_str();
+
+        // Find leading/trailing whitespace ranges
+        let trimmed_start = original
+            .find(|c: char| !c.is_whitespace())
+            .unwrap_or(0);
+        let trimmed_end = original
+            .rfind(|c: char| !c.is_whitespace())
+            .map(|i| i + 1)
+            .unwrap_or(original.len());
+
+        // Update line
+        self.line = original[trimmed_start..trimmed_end].to_string();
+
+        // Adjust marks
+        if self.mark_start < trimmed_start {
+            self.mark_start = 0;
+        } else {
+            self.mark_start -= trimmed_start;
+        }
+
+        if self.mark_stop < trimmed_start {
+            self.mark_stop = 0;
+        } else {
+            self.mark_stop -= trimmed_start;
+        }
+
+        // Clamp to the new line length (in case trimming cut beyond mark_stop)
+        let len = self.line.len();
+        self.mark_start = self.mark_start.min(len);
+        self.mark_stop = self.mark_stop.min(len);
+    }
 }

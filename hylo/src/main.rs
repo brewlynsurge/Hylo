@@ -2,10 +2,7 @@ use hylo_core::compiler::HyloCompiler;
 
 fn main() {
     let compiler = HyloCompiler::new();
-    compiler.compile_stdin(String::from("
-    let a = 10;
-    let b = 5;
-    "));
+    compiler.compile_stdin(String::from("print('Hello World)"));
 
 }
 

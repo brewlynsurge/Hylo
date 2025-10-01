@@ -1,3 +1,3 @@
 pub mod compiler;
 pub mod lexer;
-pub mod error;
+pub mod hylo_error;

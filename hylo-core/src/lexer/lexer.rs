@@ -1,9 +1,10 @@
 use super::tokens;
 use super::source_code::SourceCodeContainer;
+use crate::hylo_error;
 
 pub struct Lexer;
 impl Lexer {
-    pub fn parse(source_code: &SourceCodeContainer) -> Result<Vec<TokenContainer>, LexerError> {
+    pub fn parse(source_code: &SourceCodeContainer, file_name: &str) -> Result<Vec<TokenContainer>, hylo_error::Error> {
         let mut generated_tokens = Vec::new();
         let mut pos:usize = 0;
 
@@ -111,14 +112,20 @@ impl Lexer {
                         end: pos - 1
                     }
                 },
-                '"' => Self::handle_string(source_code, &mut pos)?,
-                '\'' => Self::handle_string(source_code, &mut pos)?,
+                '"' => Self::handle_string(source_code, &mut pos, file_name)?,
+                '\'' => Self::handle_string(source_code, &mut pos, file_name)?,
                 current_char if current_char.is_alphabetic() || current_char == '_' => {
                     Self::handle_word(source_code, &mut pos)
                 },
-                current_char if current_char.is_digit(10) => Self::handle_number(source_code, &mut pos)?,
+                current_char if current_char.is_digit(10) => Self::handle_number(source_code, &mut pos, file_name)?,
 
-                _ => return Err(LexerError::InvalidToken { start:pos.clone(), stop: pos.clone() })
+                _ => {
+                    return Err(hylo_error::Error::new(
+                        hylo_error::ErrorKind::SyntaxError,
+                        hylo_error::Span { start: pos.clone(), end: pos.clone() },
+                        file_name.to_string()
+                    ).inject_msg("The token is invalid"));
+                }
             };
 
             generated_tokens.push(generated_token_container);
@@ -127,7 +134,7 @@ impl Lexer {
         return Ok(generated_tokens);
     }
 
-    fn handle_string(source_code: &SourceCodeContainer, pos: &mut usize) -> Result<TokenContainer, LexerError> {
+    fn handle_string(source_code: &SourceCodeContainer, pos: &mut usize, file_name: &str) -> Result<TokenContainer, hylo_error::Error> {
         let start_pos = pos.clone();
         let start_sym = source_code.char_at(*pos).unwrap();
         *pos += 1;
@@ -152,7 +159,13 @@ impl Lexer {
                 first_line_end_pos = pos.clone() as i32
             }
 
-            return Err(LexerError::StringNotTerminated { start: start_pos, stop: first_line_end_pos as usize});
+            // StringNotTerminated Error
+            return Err(hylo_error::Error::new(
+                hylo_error::ErrorKind::StringNotTerminated,
+                hylo_error::Span { start: start_pos, end: first_line_end_pos as usize },
+                file_name.to_string()
+            ).inject_msg("Expected end of the string"));
+
         }
 
         let string_data = source_code.get_text(start_pos+1, pos.clone()-1).unwrap();
@@ -191,7 +204,7 @@ impl Lexer {
         }
     }
 
-    fn handle_number(source_code: &SourceCodeContainer, pos: &mut usize) -> Result<TokenContainer, LexerError> {
+    fn handle_number(source_code: &SourceCodeContainer, pos: &mut usize, file_name: &str) -> Result<TokenContainer, hylo_error::Error> {
         let start_pos = pos.clone();
 
         let mut is_float = false;
@@ -213,7 +226,14 @@ impl Lexer {
                         end: pos.clone()-1
                     })
                 }
-                Err(_) => return Err(LexerError::InvalidFloat { start: start_pos, stop: pos.clone() - 1})
+                Err(_) => {
+                    // InvalidNumber Error for float
+                    return Err(hylo_error::Error::new(
+                        hylo_error::ErrorKind::SyntaxError,
+                        hylo_error::Span { start: start_pos, end: pos.clone() - 1 },
+                        file_name.to_string()
+                    ).inject_msg("The float is not valid"));
+                }
             }
         } else {
             match number_str.parse::<i32>() {
@@ -223,22 +243,21 @@ impl Lexer {
                         end: pos.clone()-1
                     })
                 }
-                Err(_) => return Err(LexerError::InvalidInteger { start: start_pos, stop: pos.clone() - 1})
+                Err(_) => {
+                    // InvalidNumber Error for integer
+                    return Err(hylo_error::Error::new(
+                        hylo_error::ErrorKind::SyntaxError,
+                        hylo_error::Span { start: start_pos, end: pos.clone() - 1 },
+                        file_name.to_string()
+                    ).inject_msg("The integer is not valid"));
+                }
             }
         }
     }
 }
 
 pub struct TokenContainer {
-    token: tokens::Token,
-    start: usize,
-    end: usize
-}
-
-
-pub enum LexerError {
-    StringNotTerminated {start: usize, stop: usize},
-    InvalidInteger {start: usize, stop: usize},
-    InvalidFloat {start: usize, stop: usize},
-    InvalidToken {start: usize, stop: usize}
+    pub token: tokens::Token,
+    pub start: usize,
+    pub end: usize
 }
