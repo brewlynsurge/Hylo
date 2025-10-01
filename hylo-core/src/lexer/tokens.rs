@@ -11,14 +11,6 @@ pub enum Token {
     Punctuation(Punctuation)
 }
 
-//// Stores the token along with its starting position
-#[derive(Debug, PartialEq, Clone)]
-pub struct TokenContainer {
-    pub token: Token,
-    pub line: usize,
-    pub column: usize
-}
-
 /*
 Complex Tokens:
     - Keyword
