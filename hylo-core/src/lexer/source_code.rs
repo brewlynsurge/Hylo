@@ -1,139 +1,136 @@
+#[derive(Debug)]
+struct Line {
+    pub line: Vec<char>,
+    pub start_pos: usize,
+    pub end_pos: usize
+}
+impl Line {
+    pub fn get_relative_pos(&self, pos: usize) -> usize {
+        return pos - self.start_pos;
+    }
+
+    pub fn get_char_relative(&self, pos: usize) -> char {
+        let rel_pos = self.get_relative_pos(pos);
+        return self.line[rel_pos];
+    }
+}
+
+#[derive(Debug)]
 pub struct SourceCodeContainer {
-    pub source_code: Vec<Vec<char>>,
+    pub source_code: Vec<Line>,
     pub total_lines: usize,
     pub total_chars: usize
 }
 
 impl SourceCodeContainer {
     pub fn from(source_code: String) -> Self {
-        let mut code_container = Self {
-            source_code: vec![Vec::new()],
+        let mut code_container= Self {
+            source_code: Vec::new(),
             total_lines: 0,
             total_chars: 0
         };
 
-        let characters: Vec<char> = source_code.chars().collect();
-        let mut pos:usize = 0;
-        let mut vec_idx: usize = 0;
-
-        code_container.increment_line();
-        while pos < characters.len() {
-            if characters[pos] == '\n' {
-                code_container.insert_char(characters[pos], vec_idx);
-                pos += 1;
-                vec_idx += 1;
-                code_container.increment_line();
-            } else if characters[pos] == '\'' || characters[pos] == '"' {
-                code_container.insert_char(characters[pos], vec_idx);
-                pos += 1;
-
-                while pos < characters.len() {
-                    code_container.insert_char(characters[pos], vec_idx);
-                    pos += 1;
-
-                    if characters.get(pos) == Some(&'\'') || characters.get(pos) == Some(&'"') {
-                        break;
-                    } else if characters.get(pos) == Some(&'\n') {
-                        vec_idx += 1;
-                        code_container.increment_line();
-                    }
-                }
-    
-            }
-            else {
-                code_container.insert_char(characters[pos], vec_idx);
-                pos += 1;
-            }
+        let mut pos_count: usize = 0;
+        for l in source_code.split("\n") {
+            let line_chars = {
+                let mut chars:Vec<char> = l.chars().collect();
+                chars.push('\n');
+                chars
+            };
+            let end_pos = pos_count + line_chars.len() - 1;
+            
+            let s_line = Line {
+                line: line_chars,
+                start_pos: pos_count,
+                end_pos: end_pos
+            };
+            pos_count = s_line.end_pos + 1;
+            
+            code_container.source_code.push(s_line);
+            code_container.total_lines += 1;
         }
+        code_container.total_chars = pos_count;
 
         return code_container;
     }
 
-    pub fn get_char(&self, pos: usize) -> Option<char> {
-        let mut pos = pos;
-        if pos > self.total_chars-1 {
-            return None;
+    pub fn char_at(&self, pos: usize) -> Option<char> {
+        if pos >= self.total_chars { return None; }
+
+        for l in self.source_code.iter() {
+            if pos > l.end_pos {
+                continue;
+            } 
+
+            return Some(l.get_char_relative(pos));
         }
 
-        let mut vec_idx: usize = 0;
-        while vec_idx < self.total_lines {
-            let line_len = self.source_code[vec_idx].len();
-            if pos < line_len {
-                return Some(self.source_code[vec_idx][pos]);
-            } else {
-                pos -= line_len;
-                vec_idx += 1;
-            }
-        }
-        
         return None;
     }
 
-    fn insert_char(&mut self, c: char, line: usize) {
-        self.source_code[line].push(c);
-        self.total_chars += 1;
-    }
-
-    fn increment_line(&mut self) {
-        self.source_code.push(Vec::new());
-        self.total_lines += 1;
-    }
-
-    pub fn get_text(&self, start_pos: usize, end_pos: usize) -> Option<String> { // TODO: Rewrite for optimisation
+    pub fn get_text(&self, start_pos: usize, end_pos: usize) -> Option<String> {
         if start_pos > end_pos || end_pos > self.total_chars-1 {
             return None;
         }
 
-        let mut c_pos = 0;
-        let mut text = String::new();
-        while c_pos < self.total_chars {
-            if c_pos >= start_pos && c_pos <= end_pos {
-                text.push(self.get_char(c_pos).unwrap());
+        let mut text_data = String::new();
+        for (idx, l) in self.source_code.iter().enumerate() {
+            if start_pos > l.end_pos { continue }
+
+            let mut c_pos = start_pos;
+            let mut vec_idx = idx;
+            while c_pos <= end_pos {
+                let rel_pos = self.source_code[vec_idx].get_relative_pos(c_pos);
+                text_data.push(self.source_code[vec_idx].line[rel_pos]);
+                
+                if c_pos == self.source_code[vec_idx].end_pos {
+                    vec_idx += 1;
+                }
+
+                c_pos += 1;
             }
 
-            c_pos += 1;
+            break;
         }
-        
-        return Some(text);
+
+        return Some(text_data);
     }
 
-    pub fn get_lines(&self, start_pos: usize, end_pos: usize) -> Option<Vec<String>> {
-        if start_pos > end_pos {
-            return None;
+    pub fn get_error_source(&self, start_pos: usize, end_pos: usize) -> ErrorSource {
+        if start_pos > end_pos || end_pos > self.total_chars-1 {
+            panic!("Expected a valid start or end pos");
         }
 
-        let start_line_no = self.get_line_no(start_pos)?;
-        let end_line_no = self.get_line_no(end_pos)?;
-
-        let mut lines: Vec<String> = Vec::new();
-        let mut c_line_no = start_line_no;
-         
-        while c_line_no <= end_line_no {
-            let c_line: String = self.source_code[c_line_no-1].iter().collect();
-            lines.push(c_line);
-            c_line_no += 1;
-        }
-        
-        return Some(lines);
-    }
-
-    fn get_line_no(&self, pos: usize) -> Option<usize> {
-        let mut pos = pos;
-        if pos > self.total_chars {
-            return None;
-        }
-
-        let mut vec_idx: usize = 0;
-        while vec_idx < self.total_lines {
-            let line_len = self.source_code[vec_idx].len();
-            if pos <= line_len {
-                return Some(vec_idx+1);
+        let mut lines: String = String::new();
+        let mut rel_start_index = -1;
+        for l in self.source_code.iter() {
+            if start_pos > l.end_pos {
+                continue
+            } else if end_pos < l.start_pos {
+                break;
             } else {
-                pos -= line_len;
-                vec_idx += 1;
+                if rel_start_index == -1 {
+                    rel_start_index = l.get_relative_pos(start_pos) as i32;
+                }
+                lines.extend(l.line.iter());
             }
+
+
         }
 
-        return None;
+        let rel_start_pos = rel_start_index as usize;
+        let rel_end_pos = rel_start_pos + (end_pos - start_pos);
+
+        return ErrorSource {
+            lines: lines,
+            mark_start: rel_start_pos,
+            mark_stop: rel_end_pos
+        };
     }
+}
+
+pub struct ErrorSource {
+    pub lines: String,
+    pub mark_start: usize,
+    pub mark_stop: usize
 }
