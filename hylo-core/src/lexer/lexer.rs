@@ -123,7 +123,7 @@ impl Lexer {
                     return Err(hylo_error::Error::new(
                         hylo_error::ErrorKind::SyntaxError,
                         hylo_error::Span { start: pos.clone(), stop: pos.clone() },
-                        file_name
+                        Some(file_name)
                     ).add_msg("The token is invalid"));
                 }
             };
@@ -163,7 +163,7 @@ impl Lexer {
             return Err(hylo_error::Error::new(
                 hylo_error::ErrorKind::StringNotTerminated,
                 hylo_error::Span { start: start_pos, stop: first_line_end_pos as usize },
-                file_name
+                Some(file_name)
             ).add_msg("Expected end of the string"));
 
         }
@@ -231,7 +231,7 @@ impl Lexer {
                     return Err(hylo_error::Error::new(
                         hylo_error::ErrorKind::SyntaxError,
                         hylo_error::Span { start: start_pos, stop: pos.clone() - 1 },
-                        file_name
+                        Some(file_name)
                     ).add_msg("The float is not valid"));
                 }
             }
@@ -248,7 +248,7 @@ impl Lexer {
                     return Err(hylo_error::Error::new(
                         hylo_error::ErrorKind::SyntaxError,
                         hylo_error::Span { start: start_pos, stop: pos.clone() - 1 },
-                        file_name
+                        Some(file_name)
                     ).add_msg("The integer is not valid"));
                 }
             }

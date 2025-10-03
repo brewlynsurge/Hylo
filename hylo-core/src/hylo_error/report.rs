@@ -15,17 +15,17 @@ Error
 pub struct Error {
     pub kind: ErrorKind,
     pub span: Span,
-    pub file_name: String,
+    pub file_name: Option<String>,
     pub message: String,
     pub notes: Vec<String>
 }
 
 impl Error {
-    pub fn new(error_kind: ErrorKind, span: Span, file_name: &str) -> Self {
+    pub fn new(error_kind: ErrorKind, span: Span, file_name: Option<&str>) -> Self {
         Error {
             kind: error_kind,
             span: span,
-            file_name: file_name.to_string(),
+            file_name: file_name.map(|s| s.to_string()),
             message: String::new(),
             notes: Vec::new()
         }
@@ -51,11 +51,21 @@ impl Error {
     pub fn pretty(&self, source_code:Option<&SourceCodeContainer>) -> String {
         let mut output = String::new();
 
+        let file_name = self.file_name.as_deref().unwrap_or("<unknown>");
         if source_code.is_none() {
-            todo!()
+            // Header
+            output.push_str(&format!("❌ ERROR [{}]: {}\n", self.kind.code(), self.kind.as_str()));
+            output.push_str(&format!("File: {} | Code: {}\n", file_name, self.kind.code()));
+            output.push_str("   |\n");
+            output.push_str(&format!("   | ❗ {}\n", self.message));
+
+            // Note
+            for note in &self.notes {
+                output.push_str(&format!("   | 💡 {}\n", note));
+            }
         } else {
             let source_code = source_code.unwrap();
-
+            
             // 1. Error header
             output.push_str(&format!("❌ ERROR [{}]: {}\n", self.kind.code(), self.kind.as_str()));
 
@@ -63,7 +73,7 @@ impl Error {
             // 2. Location info (file:line:column)
             let (line_no, column_no) = source_code.get_line_and_column(self.span.start);
             output.push_str(&format!("   --> {}:{}:{}\n",
-                self.file_name,
+                file_name,
                 line_no,
                 column_no
             ));
