@@ -19,8 +19,7 @@ impl HyloCompiler {
         let tokens = match Lexer::parse(&source_code, "<stdin>") {
             Ok(t) => t,
             Err(e) => {
-                println!("{}", e.prettify(&source_code));
-                exit(0);
+                e.panic(Some(&source_code));
             }
         };
     }

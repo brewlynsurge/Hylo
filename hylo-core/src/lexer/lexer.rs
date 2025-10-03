@@ -122,9 +122,9 @@ impl Lexer {
                 _ => {
                     return Err(hylo_error::Error::new(
                         hylo_error::ErrorKind::SyntaxError,
-                        hylo_error::Span { start: pos.clone(), end: pos.clone() },
-                        file_name.to_string()
-                    ).inject_msg("The token is invalid"));
+                        hylo_error::Span { start: pos.clone(), stop: pos.clone() },
+                        file_name
+                    ).add_msg("The token is invalid"));
                 }
             };
 
@@ -162,9 +162,9 @@ impl Lexer {
             // StringNotTerminated Error
             return Err(hylo_error::Error::new(
                 hylo_error::ErrorKind::StringNotTerminated,
-                hylo_error::Span { start: start_pos, end: first_line_end_pos as usize },
-                file_name.to_string()
-            ).inject_msg("Expected end of the string"));
+                hylo_error::Span { start: start_pos, stop: first_line_end_pos as usize },
+                file_name
+            ).add_msg("Expected end of the string"));
 
         }
 
@@ -230,9 +230,9 @@ impl Lexer {
                     // InvalidNumber Error for float
                     return Err(hylo_error::Error::new(
                         hylo_error::ErrorKind::SyntaxError,
-                        hylo_error::Span { start: start_pos, end: pos.clone() - 1 },
-                        file_name.to_string()
-                    ).inject_msg("The float is not valid"));
+                        hylo_error::Span { start: start_pos, stop: pos.clone() - 1 },
+                        file_name
+                    ).add_msg("The float is not valid"));
                 }
             }
         } else {
@@ -247,9 +247,9 @@ impl Lexer {
                     // InvalidNumber Error for integer
                     return Err(hylo_error::Error::new(
                         hylo_error::ErrorKind::SyntaxError,
-                        hylo_error::Span { start: start_pos, end: pos.clone() - 1 },
-                        file_name.to_string()
-                    ).inject_msg("The integer is not valid"));
+                        hylo_error::Span { start: start_pos, stop: pos.clone() - 1 },
+                        file_name
+                    ).add_msg("The integer is not valid"));
                 }
             }
         }
