@@ -1,0 +1,9 @@
+# workspace/Cargo.toml
+[workspace]
+members = [
+    "hylo-core",      # Lexer and parser
+#    "hylo-vm",        # Virtual machine for interpreted and compiled modes
+    "hylo",           # Main binary crate for the Hylo CLI
+]
+
+resolver = "3"
