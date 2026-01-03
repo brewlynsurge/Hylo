@@ -138,6 +138,8 @@ impl Lexer {
             "<=" => tokens::Token::Operator(tokens::Operator::LessThanOrEqual),
             "&&" => tokens::Token::Operator(tokens::Operator::And),
             "||" => tokens::Token::Operator(tokens::Operator::Or),
+            "."  => tokens::Token::Operator(tokens::Operator::Dot),
+            "->" => tokens::Token::Operator(tokens::Operator::Arrow),
             
             _ => return None
         };
@@ -267,6 +269,7 @@ impl Lexer {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct TokenContainer {
     pub token: tokens::Token,
     pub start: usize,

@@ -21,19 +21,24 @@ Complex Tokens:
 /// Represents operators in Hylo.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Operator {
-    Equals,
     Plus,
     Minus,
     Multiply,
     Divide,
+    
+    Equals,
     GreaterThan,
     LessThan,
-    GreaterThanOrEqual,
-    LessThanOrEqual,
+    
     IsEqual,
     IsNotEqual,
+    GreaterThanOrEqual,
+    LessThanOrEqual,
+    
     And,
-    Or
+    Or,
+    Dot,
+    Arrow
 }
 
 impl Operator {
@@ -52,8 +57,11 @@ impl Operator {
             Operator::IsNotEqual         => "!=",
             Operator::GreaterThanOrEqual => ">=",
             Operator::LessThanOrEqual    => "<=",
+            
             Operator::And                => "&&",
-            Operator::Or                 => "||"
+            Operator::Or                 => "||",
+            Operator::Dot                => ".",
+            Operator::Arrow              => "->"
         }
     } 
 }

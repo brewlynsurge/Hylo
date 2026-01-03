@@ -1,6 +1,8 @@
 use crate::lexer::source_code::SourceCodeContainer;
 use crate::lexer::lexer::Lexer;
 
+use crate::parser::parser::Parser;
+
 /* HYLO COMPILER*/
 pub struct HyloCompiler;
 
@@ -13,14 +15,14 @@ impl HyloCompiler {
         let source_code = SourceCodeContainer::from(source_code);
 
 
-        let tokens = match Lexer::parse(&source_code, "<stdin>") {
+        let token_containers = match Lexer::parse(&source_code, "<stdin>") {
             Ok(t) => t,
             Err(e) => {
                 e.panic(Some(&source_code));
             }
         };
-        for t in tokens {
-            println!("{:?}",t.token);
-        }
+        
+        let mut hylo_parser = Parser::new(token_containers, "<stdin>");
+        hylo_parser.parse_program();
     }
 }

@@ -2,8 +2,8 @@ use hylo_core::compiler::HyloCompiler;
 
 fn main() {
     let compiler = HyloCompiler::new();
-    compiler.compile_stdin(String::from("
-        print('Hello world');
-    "));
 
+    // TODO: Change
+    let file_data = std::fs::read_to_string("test.hy").unwrap();
+    compiler.compile_stdin(file_data);
 }
