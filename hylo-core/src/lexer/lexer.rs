@@ -129,6 +129,7 @@ impl Lexer {
             "/" => tokens::Token::Operator(tokens::Operator::Divide),
             
             "=" => tokens::Token::Operator(tokens::Operator::Equals),
+            "!" => tokens::Token::Operator(tokens::Operator::Exclamation),
             ">" => tokens::Token::Operator(tokens::Operator::GreaterThan),
             "<" => tokens::Token::Operator(tokens::Operator::LessThan),
             

@@ -6,11 +6,11 @@ pub struct Span {
 
 #[derive(Debug)]
 pub enum Literal {
-    Int(i64, Span),
-    Float(f64, Span),
+    Int(i32, Span),
+    Float(f32, Span),
     String(String, Span),
     Bool(bool, Span),
-    Word(String, Span)
+    Word(String, Span),
 }
 
 #[derive(Debug)]
@@ -25,45 +25,43 @@ pub enum BinaryOp {
     Sub(Span),
     Mul(Span),
     Div(Span),
-    
+
     Greater(Span),
     Less(Span),
     GreaterEqual(Span),
     LessEqual(Span),
-    
+
     IsEqual(Span),
     IsNotEqual(Span),
     And(Span),
     Or(Span),
-    Dot(Span)
+    Dot(Span),
 }
 
 #[derive(Debug)]
 pub enum Expr {
     Literal(Literal),
-    
+
     Unary {
         op: UnaryOp,
-        expr: Box<Expr>
+        expr: Box<Expr>,
     },
-    
+
     Binary {
         left: Box<Expr>,
         op: BinaryOp,
-        right: Box<Expr>
+        right: Box<Expr>,
     },
-    
+
     Call {
         callee: Box<Expr>,
         lparen: Span,
         args: Vec<Expr>,
-        rparen: Span
-    }
+        rparen: Span,
+    },
+    EOL // END OF LINE
 }
 
 pub enum Stmt {
-    ExprStmt {
-        expr: Expr,
-        semicolon: Span
-    }
+    ExprStmt { expr: Expr, semicolon: Span },
 }

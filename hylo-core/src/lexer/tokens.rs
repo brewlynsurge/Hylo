@@ -27,6 +27,7 @@ pub enum Operator {
     Divide,
     
     Equals,
+    Exclamation,
     GreaterThan,
     LessThan,
     
@@ -50,6 +51,7 @@ impl Operator {
             Operator::Divide   => "/",
             
             Operator::Equals      => "=",
+            Operator::Exclamation => "!",
             Operator::GreaterThan => ">",
             Operator::LessThan    => "<",
             

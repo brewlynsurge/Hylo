@@ -22,6 +22,8 @@ impl HyloCompiler {
             }
         };
         
+        
+        
         let mut hylo_parser = Parser::new(token_containers, "<stdin>");
         hylo_parser.parse_program();
     }
