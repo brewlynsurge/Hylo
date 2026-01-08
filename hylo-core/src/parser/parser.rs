@@ -1,5 +1,3 @@
-use std::str::Matches;
-
 use crate::parser::components::{BinaryOp, Expr, Literal, Span, Stmt, UnaryOp};
 use crate::lexer::lexer::TokenContainer;
 use crate::lexer::tokens;
@@ -40,6 +38,12 @@ impl Parser {
         } else {return None} 
     }
     
+    fn check(&self, t: &tokens::Token) -> bool {
+        if let Some(c_token) = self.peek() {
+            return c_token == t;
+        } else { return false }
+    }
+    
     pub fn parse_program(&mut self) {
         let mut statements = Vec::new();
         while self.is_available(self.pos) {
@@ -48,14 +52,18 @@ impl Parser {
     }
     
     fn parse_statement(&mut self) -> Stmt {
+        let r = self.parse_expr();
+        println!("{:?}", r);
+        
+        todo!()
+    }
+    
+    fn parse_expr(&mut self) -> Result<Expr, hylo_error::Error> {
         self.parse_term()
     }
     
-    fn parse_term(&mut self) -> Stmt {
-        let r = self.parse_factor();
-        println!("{:?}", r.unwrap());
-        
-        todo!()
+    fn parse_term(&mut self) -> Result<Expr, hylo_error::Error> {
+        self.parse_factor()
     }
     
     fn parse_factor(&mut self) -> Result<Expr, hylo_error::Error> {
@@ -102,11 +110,78 @@ impl Parser {
                         op: op_parsed,
                         expr: Box::new(expr)
                     });
-                } else { return self.parse_primary() }
+                } else { return self.parse_postfix() }
             },
-            None => { return self.parse_primary() }
+            None => { return self.parse_postfix() }
         };
         
+    }
+    /* 
+     *  This function includes support for parsing
+     *  - Functional calls
+     *  - Dot Operation
+     */
+    fn parse_postfix(&mut self) -> Result<Expr, hylo_error::Error> {
+        let mut expr = self.parse_primary()?;
+        
+        loop {
+            // Parsing Functional calls
+            if self.check(&tokens::Token::Punctuation(tokens::Punctuation::LParen)) {
+                let lparen_span = {
+                    let lparen_con = self.advance().unwrap();
+                    Span { start: lparen_con.start, end: lparen_con.end }
+                };
+                
+                 // TODO: Make support for expr inside args
+                 // 
+                 // 
+                 // 
+                 // 
+                
+                let mut args: Vec<Expr> = Vec::new();
+                if !self.check(&tokens::Token::Punctuation(tokens::Punctuation::RParen)) {
+                    loop {
+                        args.push(self.parse_expr()?);
+                        
+                        if !self.check(&tokens::Token::Punctuation(tokens::Punctuation::Comma)) {
+                            break;
+                        }
+                        self.advance();
+                    } 
+                }
+                
+                let rparen_span = {
+                    if !self.check(&tokens::Token::Punctuation(tokens::Punctuation::RParen)) {
+                        // TODO: ERROR
+                        todo!()
+                    }
+                    
+                    let t_con = self.advance().unwrap();
+                    Span { start: t_con.start, end: t_con.end }
+                };
+                
+                expr = Expr::Call {
+                    callee: Box::new(expr),
+                    lparen: lparen_span,
+                    args: args,
+                    rparen: rparen_span
+                }
+            } else if self.check(&tokens::Token::Operator(tokens::Operator::Dot)) { 
+                let dot_span = {
+                    let dot_con = self.advance().unwrap();
+                    Span { start: dot_con.start, end: dot_con.end }
+                };
+                let member = self.parse_expr()?;
+                
+                expr = Expr::Member {
+                    obj: Box::new(expr),
+                    dot: dot_span,
+                    member: Box::new(member)
+                };
+                
+            } else { break }
+        }
+        return Ok(expr);
     }
     
     fn parse_primary(&mut self) -> Result<Expr, hylo_error::Error> {

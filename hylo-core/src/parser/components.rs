@@ -34,8 +34,7 @@ pub enum BinaryOp {
     IsEqual(Span),
     IsNotEqual(Span),
     And(Span),
-    Or(Span),
-    Dot(Span),
+    Or(Span)
 }
 
 #[derive(Debug)]
@@ -58,6 +57,11 @@ pub enum Expr {
         lparen: Span,
         args: Vec<Expr>,
         rparen: Span,
+    },
+    Member {
+        obj: Box<Expr>,
+        dot: Span,
+        member: Box<Expr>
     },
     EOL // END OF LINE
 }

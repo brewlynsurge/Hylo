@@ -73,24 +73,26 @@ impl Operator {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Punctuation {
     Semicolon,
+    Comma,
     LParen, 
     RParen,
     LBrace,
     RBrace,
     LBracket,
-    RBracket,
+    RBracket
 }
 
 impl Punctuation {
     pub fn as_symbol(&self) -> &'static str {
         match self {
             Punctuation::Semicolon => ";",
+            Punctuation::Comma => ",",
             Punctuation::LParen    => "(",
             Punctuation::RParen    => ")",
             Punctuation::LBrace    => "{",
             Punctuation::RBrace    => "}",
             Punctuation::LBracket  => "[",
-            Punctuation::RBracket  => "]",
+            Punctuation::RBracket  => "]"
         }
     }
 }

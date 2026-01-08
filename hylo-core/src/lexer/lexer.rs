@@ -24,6 +24,14 @@ impl Lexer {
                         end: pos - 1
                     }
                 }
+                ',' => {
+                    pos += 1;
+                    TokenContainer {
+                        token: tokens::Token::Punctuation(tokens::Punctuation::Comma),
+                        start: pos - 1,
+                        end: pos - 1
+                    }
+                }
                 '(' => {
                     pos += 1;
                     TokenContainer {
