@@ -88,10 +88,10 @@ impl Lexer {
                 current_char if current_char.is_digit(10) => Self::handle_number(source_code, &mut pos, file_name)?,
                 
                 // Matching operators
-                current_char if matches!(current_char, '+' | '-' | '*' | '/' | '>' |'<' | '=' | '&' | '!' | '|') => {
+                current_char if matches!(current_char, '+' | '-' | '*' | '/' | '>' |'<' | '=' | '&' | '!' | '|' | '.') => {
                     let next_char = source_code.char_at(pos+1);
                     let mut op_char = String::new();
-                    if let Some(next_char) = next_char  && matches!(next_char, '+' | '-' | '*' | '/' | '>' |'<' | '=' | '&' | '!' | '|') {
+                    if let Some(next_char) = next_char  && matches!(next_char, '+' | '-' | '*' | '/' | '>' |'<' | '=' | '&' | '!' | '|' | '.') {
                         op_char.extend([current_char, next_char].iter());
                     }  else { op_char.push(current_char); }
                     

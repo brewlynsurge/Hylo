@@ -63,7 +63,29 @@ impl Parser {
     }
     
     fn parse_term(&mut self) -> Result<Expr, hylo_error::Error> {
-        self.parse_factor()
+        let mut expr = self.parse_factor()?;
+        
+        if self.peek().is_some() {
+            while self.peek().is_some() && matches!(self.peek().unwrap().clone(), tokens::Token::Operator(tokens::Operator::Plus) | tokens::Token::Operator(tokens::Operator::Minus)) {
+                let op_parsed = {
+                    let op_container = self.advance().unwrap();
+                    // Convertion of lexer operator into parser form
+                    match op_container.token {
+                        tokens::Token::Operator(tokens::Operator::Plus) => BinaryOp::Add(Span { start: op_container.start, end: op_container.end }),
+                        _ => BinaryOp::Sub(Span { start: op_container.start, end: op_container.end })
+                    }
+                };
+                
+                let rhs = self.parse_factor()?;
+                expr = Expr::Binary {
+                    left: Box::new(expr),
+                    op: op_parsed,
+                    right: Box::new(rhs)
+                }
+            }
+        }
+        
+        return Ok(expr);
     }
     
     fn parse_factor(&mut self) -> Result<Expr, hylo_error::Error> {
@@ -132,12 +154,6 @@ impl Parser {
                     Span { start: lparen_con.start, end: lparen_con.end }
                 };
                 
-                 // TODO: Make support for expr inside args
-                 // 
-                 // 
-                 // 
-                 // 
-                
                 let mut args: Vec<Expr> = Vec::new();
                 if !self.check(&tokens::Token::Punctuation(tokens::Punctuation::RParen)) {
                     loop {
@@ -152,8 +168,12 @@ impl Parser {
                 
                 let rparen_span = {
                     if !self.check(&tokens::Token::Punctuation(tokens::Punctuation::RParen)) {
-                        // TODO: ERROR
-                        todo!()
+                        return Err(hylo_error::Error::new(
+                            hylo_error::ErrorKind::SyntaxError,
+                            hylo_error::Span { start: lparen_span.start, stop: lparen_span.end},
+                            Some(&self.file_name)
+                        ).add_msg("Expected clossing ')' of the functional call")
+                        .add_note("Add a closing ')' before the end of the functional call"));
                     }
                     
                     let t_con = self.advance().unwrap();
