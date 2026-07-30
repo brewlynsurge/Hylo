@@ -217,6 +217,14 @@ impl Parser {
                 tokens::Token::String(value) => Expr::Literal(Literal::String(value, pos)),
                 tokens::Token::Boolean(value) => Expr::Literal(Literal::Bool(value, pos)),
                 tokens::Token::Word(value) => Expr::Literal(Literal::Word(value, pos)),
+                tokens::Token::Punctuation(tokens::Punctuation::LParen) => { // Paranthesis support
+                  let expr = self.parse_expr()?;
+                  if !self.check(&tokens::Token::Punctuation(tokens::Punctuation::RParen)) {
+                      todo!(); // Report error
+                  }
+                  self.advance();
+                  expr
+                },
                 unknown_token => {
                     return Err(hylo_error::Error::new(
                         hylo_error::ErrorKind::SyntaxError,

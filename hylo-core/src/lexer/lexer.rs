@@ -1,7 +1,25 @@
-use super::tokens;
 use super::source_code::SourceCodeContainer;
 use crate::hylo_error;
 
+/*
+ * TOKENS
+ * Represents all possible tokens in Hylo
+ */
+ #[derive(Debug, PartialEq, Clone)]
+ pub enum Token {
+     Int(i32),
+     Float(f32),
+     String(String),
+     Boolean(bool),
+     Word(String),
+ 
+     Operator(String),
+     Punctuation(String)
+ }
+ 
+ /*
+  * LEXER
+  */
 pub struct Lexer;
 impl Lexer {
     pub fn parse(source_code: &SourceCodeContainer, file_name: &str) -> Result<Vec<TokenContainer>, hylo_error::Error> {
